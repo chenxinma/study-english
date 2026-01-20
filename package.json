@@ -1,0 +1,8 @@
+{
+  "name": "study",
+  "version": "1.0.0",
+  "description": "单词记忆应用",
+  "main": "index.js",
+  "author": "chenxin.ma",
+  "license": "MIT"
+}
