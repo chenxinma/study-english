@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习统计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .box-progress {
+            height: 8px;
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        
+        .streak-fire {
+            color: #f59e0b;
+            animation: flicker 2s infinite;
+        }
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .achievement-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+        }
+        
+        .nav-button {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container mx-auto max-w-7xl">
+        <!-- Header -->
+        <header class="glass-morphism rounded-2xl p-6 mb-6 text-white animate-fade-in">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">学习统计</h1>
+                    <p class="text-white/80">跟踪你的学习进度和成就</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="window.location.href='learning.html'" class="nav-button px-6 py-2 rounded-lg text-white font-medium hover:text-white">
+                        返回学习
+                    </button>
+                    <button onclick="exportStatistics()" class="nav-button px-6 py-2 rounded-lg text-white font-medium hover:text-white">
+                        导出统计
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Statistics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <!-- Total Studied -->
+            <div class="stat-card p-6 animate-fade-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <div class="text-green-500 text-sm font-medium">+12%</div>
+                </div>
+                <div class="stat-number" id="totalStudied">156</div>
+                <div class="text-gray-600 font-medium">总学习单词</div>
+            </div>
+
+            <!-- Correct Rate -->
+            <div class="stat-card p-6 animate-fade-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-green-500 text-sm font-medium">优秀</div>
+                </div>
+                <div class="stat-number" id="correctRate">82%</div>
+                <div class="text-gray-600 font-medium">正确率</div>
+            </div>
+
+            <!-- Current Streak -->
+            <div class="stat-card p-6 animate-fade-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-orange-600 streak-fire" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-orange-500 text-sm font-medium">连续!</div>
+                </div>
+                <div class="stat-number" id="currentStreak">7</div>
+                <div class="text-gray-600 font-medium">连续正确</div>
+            </div>
+
+            <!-- Total Words -->
+            <div class="stat-card p-6 animate-fade-in" style="animation-delay: 0.4s">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                    <div class="text-blue-500 text-sm font-medium">活跃</div>
+                </div>
+                <div class="stat-number" id="totalWords">234</div>
+                <div class="text-gray-600 font-medium">单词总数</div>
+            </div>
+        </div>
+
+        <!-- Charts and Details Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- Box Distribution -->
+            <div class="lg:col-span-2 stat-card p-6 animate-slide-up" style="animation-delay: 0.5s">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">莱特纳盒子分布</h2>
+                <div class="chart-container">
+                    <canvas id="boxChart"></canvas>
+                </div>
+                <div class="mt-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 bg-green-500 rounded"></div>
+                            <span class="font-medium text-gray-700">盒子 1 - 新手</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">45 个单词</span>
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="box-progress" style="width: 40%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 bg-blue-500 rounded"></div>
+                            <span class="font-medium text-gray-700">盒子 2 - 进阶</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">38 个单词</span>
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="box-progress" style="width: 35%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 bg-purple-500 rounded"></div>
+                            <span class="font-medium text-gray-700">盒子 3 - 熟练</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">52 个单词</span>
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="box-progress" style="width: 45%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 bg-orange-500 rounded"></div>
+                            <span class="font-medium text-gray-700">盒子 4 - 熟悉</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">68 个单词</span>
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="box-progress" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 bg-red-500 rounded"></div>
+                            <span class="font-medium text-gray-700">盒子 5 - 掌握</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">31 个单词</span>
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="box-progress" style="width: 25%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="stat-card p-6 animate-slide-up" style="animation-delay: 0.6s">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">成就徽章</h2>
+                <div class="space-y-3">
+                    <div class="achievement-badge">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        快速学习者
+                    </div>
+                    <div class="achievement-badge">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                        </svg>
+                        连续7天
+                    </div>
+                    <div class="achievement-badge">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        准确率80%+
+                    </div>
+                    <div class="achievement-badge">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        词汇大师
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                    <h3 class="font-semibold text-gray-800 mb-2">学习建议</h3>
+                    <p class="text-sm text-gray-600">盒子2中的单词较多，建议重点复习这些进阶词汇来提升整体掌握度。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Chart -->
+        <div class="stat-card p-6 animate-slide-up" style="animation-delay: 0.7s">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">学习进度趋势</h2>
+            <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class StatisticsDashboard {
+            constructor() {
+                this.stats = this.loadSampleStats();
+                this.initCharts();
+                this.updateStatCards();
+            }
+
+            loadSampleStats() {
+                return {
+                    totalStudied: 156,
+                    totalCorrect: 128,
+                    currentStreak: 7,
+                    totalWords: 234,
+                    boxDistribution: [45, 38, 52, 68, 31],
+                    dailyProgress: [
+                        { date: '1/14', studied: 20, correct: 16 },
+                        { date: '1/15', studied: 18, correct: 15 },
+                        { date: '1/16', studied: 25, correct: 20 },
+                        { date: '1/17', studied: 22, correct: 19 },
+                        { date: '1/18', studied: 15, correct: 12 },
+                        { date: '1/19', studied: 30, correct: 26 },
+                        { date: '1/20', studied: 26, correct: 20 }
+                    ]
+                };
+            }
+
+            updateStatCards() {
+                const correctRate = this.stats.totalStudied > 0 
+                    ? Math.round((this.stats.totalCorrect / this.stats.totalStudied) * 100) 
+                    : 0;
+
+                document.getElementById('totalStudied').textContent = this.stats.totalStudied;
+                document.getElementById('correctRate').textContent = correctRate + '%';
+                document.getElementById('currentStreak').textContent = this.stats.currentStreak;
+                document.getElementById('totalWords').textContent = this.stats.totalWords;
+            }
+
+            initCharts() {
+                this.createBoxChart();
+                this.createProgressChart();
+            }
+
+            createBoxChart() {
+                const ctx = document.getElementById('boxChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['新手盒', '进阶盒', '熟练盒', '熟悉盒', '掌握盒'],
+                        datasets: [{
+                            data: this.stats.boxDistribution,
+                            backgroundColor: [
+                                '#10b981',
+                                '#3b82f6', 
+                                '#8b5cf6',
+                                '#f59e0b',
+                                '#ef4444'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: {
+                                        size: 12,
+                                        family: "'Noto Sans SC', sans-serif"
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((context.parsed / total) * 100);
+                                        return `${context.label}: ${context.parsed} 个单词 (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createProgressChart() {
+                const ctx = document.getElementById('progressChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: this.stats.dailyProgress.map(d => d.date),
+                        datasets: [
+                            {
+                                label: '学习单词数',
+                                data: this.stats.dailyProgress.map(d => d.studied),
+                                borderColor: '#8b5cf6',
+                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: '正确单词数',
+                                data: this.stats.dailyProgress.map(d => d.correct),
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        family: "'Noto Sans SC', sans-serif"
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function exportStatistics() {
+            const stats = {
+                totalStudied: document.getElementById('totalStudied').textContent,
+                correctRate: document.getElementById('correctRate').textContent,
+                currentStreak: document.getElementById('currentStreak').textContent,
+                totalWords: document.getElementById('totalWords').textContent,
+                exportDate: new Date().toLocaleDateString('zh-CN')
+            };
+            
+            const dataStr = JSON.stringify(stats, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `学习统计_${stats.exportDate}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '已导出!';
+            button.classList.add('bg-green-500');
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-green-500');
+            }, 2000);
+        }
+
+        // Initialize dashboard
+        window.addEventListener('DOMContentLoaded', () => {
+            new StatisticsDashboard();
+        });
+    </script>
+</body>
+</html>
