@@ -1,5 +1,5 @@
-const FileReader = require('../io/fileReader');
-const Word = require('../models/word');
+import FileReader from '../io/fileReader';
+import Word from '../models/word';
 
 class WordManager {
   constructor() {
@@ -115,4 +115,4 @@ class WordManager {
   }
 }
 
-module.exports = WordManager;
+export default WordManager;

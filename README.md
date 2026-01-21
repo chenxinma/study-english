@@ -1,74 +1,16 @@
-# 背单词应用
+# React + Vite
 
-基于莱特纳盒子（Leitner System）记忆法的命令行背单词工具，通过科学的复习间隔帮助用户高效记忆英语单词。
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 功能特性
+Currently, two official plugins are available:
 
-- **莱特纳盒子算法**: 根据艾宾浩斯遗忘曲线原理设计的记忆算法
-- **多种练习模式**: 配对、填空、翻译三种题型
-- **灵活的单词导入**: 支持txt文本批量导入单词
-- **智能复习机制**: 自动调整单词复习频率
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## 安装与使用
+## React Compiler
 
-### 环境要求
-- Node.js >= 14.0.0
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-### 快速开始
-1. 克隆项目到本地
-2. 准备单词库文件，每行格式为 `[中文]    [英文]` (中间用tab或多个空格分隔)
-3. 运行应用：
-   ```
-   node src/app.js
-   ```
+## Expanding the ESLint configuration
 
-### 单词库格式示例
-```
-苹果    apple
-香蕉    banana
-橙子    orange
-葡萄    grape
-西瓜    watermelon
-```
-
-## 使用说明
-
-1. **导入单词库**: 从txt文件导入需要学习的单词
-2. **开始学习**: 系统会根据莱特纳盒子算法选择10个单词进行练习
-3. **选择题型**: 从配对、填空、翻译三种题型中选择
-4. **答题反馈**: 系统会记录答题情况并更新单词的复习计划
-
-## 题型介绍
-
-- **配对题型**: 5个单词的中英文打乱顺序，让用户配对
-- **填空题型**: 给出中文和首字母/尾字母提示，填写完整英文单词
-- **翻译题型**: 给出英文单词，写出中文释义
-
-## 莱特纳盒子原理
-
-- **Box 1 (新手)**: 每日复习，答对移入Box 2
-- **Box 2 (进阶)**: 每2日复习，答对移入Box 3
-- **Box 3 (熟练)**: 每周复习，答错退回Box 1
-
-## 项目结构
-
-```
-project/
-├── src/                   # 源代码目录
-├── docs/                  # 文档目录
-│   └── design.md         # 详细设计文档
-├── data/                  # 数据目录
-└── README.md
-```
-
-## 开发计划
-
-- [ ] 核心功能开发
-- [ ] 莱特纳盒子算法实现
-- [ ] 三种题型开发
-- [ ] 文件导入功能
-- [ ] 命令行交互界面
-
-## 贡献
-
-欢迎提交Issue和Pull Request来改进这个项目。
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.

@@ -1,4 +1,4 @@
-const FileReader = require('../io/fileReader');
+import FileReader from '../io/fileReader';
 
 class LeitnerBox {
   constructor() {
@@ -262,4 +262,4 @@ class LeitnerBox {
   }
 }
 
-module.exports = LeitnerBox;
+export default LeitnerBox;

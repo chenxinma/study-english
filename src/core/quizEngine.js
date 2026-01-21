@@ -322,4 +322,4 @@ class QuizEngine {
   }
 }
 
-module.exports = QuizEngine;
+export default QuizEngine;

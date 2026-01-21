@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const Word = require('../models/word');
+import fs from 'fs';
+import path from 'path';
+import Word from '../models/word';
 
 class FileReader {
   /**
@@ -107,4 +107,4 @@ class FileReader {
   }
 }
 
-module.exports = FileReader;
+export default FileReader;
