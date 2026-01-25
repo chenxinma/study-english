@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const FillInQuiz = ({ question, onSubmit }) => {
+const FillInQuiz = ({ question, onSubmit, onNextQuestion }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -35,18 +35,20 @@ const FillInQuiz = ({ question, onSubmit }) => {
     
     const correct = normalizedUserAnswer === correctAnswer;
     setIsCorrect(correct);
-    
     setAttempts(attempts + 1);
     
-    setTimeout(() => {
-      onSubmit({
-        answer: userAnswer.trim(),
-        correct,
-        attempts: attempts + 1,
-        hints: hints,
-        timeToAnswer: Date.now() - startTime.current
-      });
-    }, 2000);
+    onSubmit({
+      answer: userAnswer.trim(),
+      correct,
+      attempts: attempts + 1,
+      hints: hints,
+      timeToAnswer: Date.now() - startTime.current
+    });
+  };
+
+  const handleNextQuestionClick = () => {
+    setShowFeedback(false);
+    onNextQuestion();
   };
 
   const getHint = () => {
@@ -108,8 +110,8 @@ const FillInQuiz = ({ question, onSubmit }) => {
     <div className="space-y-8">
       {/* Quiz Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">填空题</h2>
-        <p className="text-gray-600 mb-8">根据中文释义和字母提示填写完整英文单词</p>
+        <h2 className="text-3xl font-bold text-gray-50 mb-4">填空题</h2>
+        <p className="text-gray-100 mb-8">根据中文释义和字母提示填写完整英文单词</p>
       </div>
 
       {/* Question Card */}
@@ -152,7 +154,7 @@ const FillInQuiz = ({ question, onSubmit }) => {
       {!showFeedback && (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
-            <label className="block text-lg font-medium text-gray-700 mb-2">
+            <label className="block text-lg font-medium text-gray-100 mb-2">
               你的答案
               {attempts > 0 && (
                 <span className="ml-2 text-sm text-gray-500">(尝试次数: {attempts})</span>
@@ -164,7 +166,7 @@ const FillInQuiz = ({ question, onSubmit }) => {
                 type="text"
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
-                className="w-full px-6 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 text-lg font-medium transition-all duration-300"
+                className="w-full px-6 py-4 border-2 border-gray-300 bg-white rounded-xl focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 text-lg font-medium transition-all duration-300"
                 placeholder="请输入英文单词..."
                 disabled={showFeedback}
               />
@@ -226,6 +228,16 @@ const FillInQuiz = ({ question, onSubmit }) => {
               <p className="text-sm text-gray-600">正确答案: <span className="font-medium text-green-600">{question.fullWord}</span></p>
             </div>
           )}
+          
+          {/* Next Question Button */}
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={handleNextQuestionClick}
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              下一题
+            </button>
+          </div>
         </div>
       )}
     </div>

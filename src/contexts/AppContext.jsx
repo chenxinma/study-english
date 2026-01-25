@@ -66,7 +66,7 @@ export const AppProvider = ({ children }) => {
       case 'matching':
         quiz = webQuizEngine.generateMatchingQuiz(words.slice(0, 5));
         break;
-      case 'fillIn':
+      case 'fill-in':
         quiz = webQuizEngine.generateFillInQuiz(words.slice(0, 5));
         break;
       case 'translation':
@@ -87,26 +87,87 @@ export const AppProvider = ({ children }) => {
   };
 
   // Submit answer for current question
-  const submitAnswer = async (answer) => {
+  const submitAnswer = async (answerData) => {
     if (!currentQuiz) return;
 
     const currentQuestion = currentQuiz.questions[learningProgress.currentQuestion];
-    const isCorrect = webQuizEngine.evaluateAnswer(answer, currentQuestion.answer, currentQuestion.type);
+    
+    // Handle both string answer and answer object
+    let answer;
+    let additionalData = {};
+    
+    if (typeof answerData === 'object' && answerData !== null) {
+      answer = answerData.answer;
+      additionalData = { ...answerData };
+      delete additionalData.answer; // Remove answer from additional data
+    } else {
+      answer = answerData;
+    }
+    
+    // Use answerKey for matching quiz, otherwise use answer
+    const correctAnswer = currentQuiz.type === 'matching' 
+      ? currentQuestion.answerKey 
+      : currentQuestion.answer;
+    const isCorrect = webQuizEngine.evaluateAnswer(answer, correctAnswer, currentQuiz.type);
 
     // Update word status in Leitner box
-    const word = currentQuestion.word;
-    await webLeitnerBox.updateWordStatus(word, isCorrect);
+    let word = null;
+    
+    if (currentQuiz.type === 'matching') {
+      // For matching quiz, get all words from the quiz
+      const words = currentQuiz.words;
+      if (words && words.length > 0) {
+        // Update all words that were part of this matching quiz
+        for (const w of words) {
+          await webLeitnerBox.updateWordStatus(w, isCorrect);
+        }
+        // Use the first word for the return value
+        word = words[0];
+      }
+    } else {
+      // For other quiz types, update the single word
+      const currentWord = currentQuestion.word;
+      if (currentWord) {
+        await webLeitnerBox.updateWordStatus(currentWord, isCorrect);
+        word = currentWord;
+      }
+    }
 
     // Update learning progress
     const newAnswers = [...learningProgress.userAnswers, {
       question: currentQuestion,
       userAnswer: answer,
-      correct: isCorrect
+      correct: isCorrect,
+      ...additionalData // Include additional data like attempts, hints, timeToAnswer
     }];
+
+    // For matching quiz, auto-advance since it's a complete exercise
+    const shouldAdvance = currentQuiz.type === 'matching';
+    
+    let newProgress = {
+      ...learningProgress,
+      userAnswers: newAnswers
+    };
+
+    if (shouldAdvance) {
+      newProgress.currentQuestion = learningProgress.currentQuestion + 1;
+      // Check if quiz is complete
+      if (newProgress.currentQuestion >= currentQuiz.questions.length) {
+        newProgress.showResults = true;
+      }
+    }
+
+    setLearningProgress(newProgress);
+
+    return { correct: isCorrect, word, shouldAdvance };
+  };
+
+  // Move to the next question
+  const moveToNextQuestion = () => {
+    if (!currentQuiz) return;
 
     const newProgress = {
       ...learningProgress,
-      userAnswers: newAnswers,
       currentQuestion: learningProgress.currentQuestion + 1
     };
 
@@ -116,8 +177,6 @@ export const AppProvider = ({ children }) => {
     }
 
     setLearningProgress(newProgress);
-
-    return { correct: isCorrect, word };
   };
 
   // Get current statistics
@@ -154,6 +213,7 @@ export const AppProvider = ({ children }) => {
     loadWordsFromFile,
     startQuiz,
     submitAnswer,
+    moveToNextQuestion,
     getStatistics,
     getWordsForReview,
     

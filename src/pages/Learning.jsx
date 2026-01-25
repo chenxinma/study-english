@@ -5,7 +5,7 @@ import FillInQuiz from '../components/Quiz/FillInQuiz';
 import TranslationQuiz from '../components/Quiz/TranslationQuiz';
 
 const LearningPage = () => {
-  const { startQuiz, submitAnswer, currentQuiz, learningProgress } = useApp();
+  const { startQuiz, submitAnswer, moveToNextQuestion, currentQuiz, learningProgress } = useApp();
   const [quizType, setQuizType] = useState('random');
   const [isStarted, setIsStarted] = useState(false);
 
@@ -29,6 +29,10 @@ const LearningPage = () => {
     await submitAnswer(answer);
   };
 
+  const handleNextQuestion = () => {
+    moveToNextQuestion();
+  };
+
   const handleQuizComplete = () => {
     setIsStarted(false);
     handleStartQuiz(); // Start new quiz
@@ -38,10 +42,10 @@ const LearningPage = () => {
     if (!currentQuiz || learningProgress.showResults) {
       return null;
     }
-
+    
     const currentQuestion = currentQuiz.questions[learningProgress.currentQuestion];
     
-    switch (currentQuestion.type) {
+    switch (currentQuiz.type) {
       case 'matching':
         return (
           <MatchingQuiz 
@@ -49,11 +53,12 @@ const LearningPage = () => {
             onSubmit={handleAnswerSubmit}
           />
         );
-      case 'fillIn':
+      case 'fill-in':
         return (
           <FillInQuiz 
             question={currentQuestion}
             onSubmit={handleAnswerSubmit}
+            onNextQuestion={handleNextQuestion}
           />
         );
       case 'translation':
@@ -61,6 +66,7 @@ const LearningPage = () => {
           <TranslationQuiz 
             question={currentQuestion}
             onSubmit={handleAnswerSubmit}
+            onNextQuestion={handleNextQuestion}
           />
         );
       default:

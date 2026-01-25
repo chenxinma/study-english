@@ -51,7 +51,7 @@ class WebWordManager {
       if (!trimmedLine) continue;
       
       // Support both tab and space separated formats
-      const parts = trimmedLine.split(/\t+|\s+/).filter(part => part.length > 0);
+      const parts = trimmedLine.split(/\t+/).filter(part => part.length > 0);
       
       if (parts.length >= 2) {
         // Assume first part is Chinese, rest is English

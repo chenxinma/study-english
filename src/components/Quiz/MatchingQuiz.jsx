@@ -6,7 +6,7 @@ const MatchingQuiz = ({ question, onSubmit }) => {
   const [matchedPairs, setMatchedPairs] = useState([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-
+  // console.log(question);
   useEffect(() => {
     // Reset state when question changes
     setSelectedChinese(null);
@@ -88,6 +88,11 @@ const MatchingQuiz = ({ question, onSubmit }) => {
       ? 'bg-yellow-100 border-yellow-400 text-yellow-900 scale-105 shadow-lg' 
       : 'bg-white border-gray-200 hover:shadow-md hover:scale-102';
   };
+
+  if (!question || !question.chineseOptions || !question.englishOptions || !question.answerKey) {
+    console.error('Invalid question data', question.chineseOptions, question.englishOptions, question.answerKey);
+    return null;
+  }
 
   return (
     <div className="space-y-8">

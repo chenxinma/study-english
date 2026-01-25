@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const TranslationQuiz = ({ question, onSubmit }) => {
+const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -56,15 +56,18 @@ const TranslationQuiz = ({ question, onSubmit }) => {
     
     setIsCorrect(correct);
     
-    setTimeout(() => {
-      onSubmit({
-        answer: userAnswer.trim(),
-        correct,
-        isSynonym: correct && normalizedUserAnswer !== normalizedCorrectAnswer,
-        synonyms: synonyms,
-        timeToAnswer: Date.now() - startTime.current
-      });
-    }, 3000);
+    onSubmit({
+      answer: userAnswer.trim(),
+      correct,
+      isSynonym: correct && normalizedUserAnswer !== normalizedCorrectAnswer,
+      synonyms: synonyms,
+      timeToAnswer: Date.now() - startTime.current
+    });
+  };
+
+  const handleNextQuestionClick = () => {
+    setShowFeedback(false);
+    onNextQuestion();
   };
 
   const getFeedbackMessage = () => {
@@ -94,8 +97,8 @@ const TranslationQuiz = ({ question, onSubmit }) => {
     <div className="space-y-8">
       {/* Quiz Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">翻译题</h2>
-        <p className="text-gray-600 mb-8">请将下列英文单词翻译成中文 (支持同义词)</p>
+        <h2 className="text-3xl font-bold text-gray-50 mb-4">翻译题</h2>
+        <p className="text-gray-100 mb-8">请将下列英文单词翻译成中文 (支持同义词)</p>
       </div>
 
       {/* English Word Display */}
@@ -157,7 +160,7 @@ const TranslationQuiz = ({ question, onSubmit }) => {
       {!showFeedback && (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
+            <label className="block text-lg font-medium text-gray-100 mb-2">
               中文翻译
             </label>
             <div className="relative">
@@ -165,7 +168,7 @@ const TranslationQuiz = ({ question, onSubmit }) => {
                 ref={inputRef}
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
-                className="w-full px-6 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 text-lg font-medium transition-all duration-300 resize-none"
+                className="w-full px-6 py-4 border-2 border-gray-300 bg-white rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 text-lg font-medium transition-all duration-300 resize-none"
                 placeholder="请输入中文翻译..."
                 rows={3}
                 disabled={showFeedback}
@@ -256,6 +259,16 @@ const TranslationQuiz = ({ question, onSubmit }) => {
                 </div>
               </div>
             )}
+          </div>
+          
+          {/* Next Question Button */}
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={handleNextQuestionClick}
+              className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              下一题
+            </button>
           </div>
         </div>
       )}

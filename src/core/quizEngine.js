@@ -63,12 +63,14 @@ class QuizEngine {
         // For longer words, show first and last letter with underscores in between
         hint = english[0] + '_'.repeat(english.length - 2) + english[english.length - 1];
       }
+      console.log('hint', hint, word);
       
       return {
         chinese: word.chinese,
         hint: hint,
         answer: word.english.toLowerCase(),
-        fullWord: word.english
+        fullWord: word.english,
+        word: word
       };
     });
     
@@ -108,13 +110,25 @@ class QuizEngine {
 
   /**
    * Evaluate a user's answer against the correct answer
-   * @param {string} userAnswer - User's answer
-   * @param {string} correctAnswer - Correct answer
+   * @param {string|Object} userAnswer - User's answer
+   * @param {string|Object} correctAnswer - Correct answer
    * @param {string} quizType - Type of quiz ('translation', 'fill-in', 'matching')
    * @returns {boolean} Whether the answer is correct
    */
   static evaluateAnswer(userAnswer, correctAnswer, quizType = 'translation') {
-    // Normalize both answers for comparison (trim whitespace)
+    // Special handling for matching quiz
+    if (quizType === 'matching') {
+      // For matching quiz, userAnswer should be an object with matchedPairs
+      // and correctAnswer should be the answerKey
+      if (userAnswer && userAnswer.matchedPairs && correctAnswer) {
+        return userAnswer.matchedPairs.every(pair => 
+          correctAnswer[pair.chineseIndex] === pair.englishIndex
+        );
+      }
+      return false;
+    }
+    
+    // For other quiz types, normalize both answers for comparison (trim whitespace)
     const normalizedUserAnswer = userAnswer.trim();
     const normalizedCorrectAnswer = correctAnswer.trim();
     
