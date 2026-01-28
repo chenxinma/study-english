@@ -53,13 +53,18 @@ class WebWordManager {
       // Support both tab and space separated formats
       const parts = trimmedLine.split(/\t+/).filter(part => part.length > 0);
       
-      if (parts.length >= 2) {
-        // Assume first part is Chinese, rest is English
-        const chinese = parts[0];
-        const english = parts.slice(1).join(' ');
-        const word = new Word(chinese, english);
-        words.push(word);
-      }
+       if (parts.length >= 2) {
+         // Assume first part is Chinese, rest is English
+         let chinese = parts[0];
+         const english = parts.slice(1).join(' ');
+         
+         // Remove POS tags from Chinese part if present
+         chinese = chinese.replace(/\s*\([^)]*(n\.|adj\.|pron\.|v\.|prep\.|adv\.|interj\.|conj\.|det\.|modal v\.|phr\.)[^)]*\)/g, '');
+         chinese = chinese.replace(/(\s+|\/)(n\.|adj\.|pron\.|v\.|prep\.|adv\.|interj\.|conj\.|det\.|modal v\.|phr\.)/g, '');
+         
+         const word = new Word(chinese, english);
+         words.push(word);
+       }
     }
     
     return words;

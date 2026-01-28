@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
 import StatCard from '../components/Cards/StatCard';
+import WebStorage from '../services/webStorage';
 
 const StatisticsPage = () => {
   const { getStatistics } = useApp();
@@ -33,7 +34,6 @@ const StatisticsPage = () => {
     
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">莱特纳盒子分布</h3>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map(box => {
             const count = stats.boxDistribution[box] || 0;
@@ -42,7 +42,7 @@ const StatisticsPage = () => {
             
             return (
               <div key={box} className="flex items-center gap-4">
-                <div className="w-16 text-sm font-medium text-gray-600">盒子 {box}</div>
+                <div className="w-16 text-sm font-medium text-gray-300">盒子 {box}</div>
                 <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
                   <div 
                     className={`${colors[box-1]} h-6 rounded-full transition-all duration-500 flex items-center justify-end pr-2`}
@@ -58,7 +58,7 @@ const StatisticsPage = () => {
             );
           })}
         </div>
-        <div className="text-sm text-gray-600 mt-4">
+        <div className="text-sm text-gray-300 mt-4">
           总计: {total} 个单词
         </div>
       </div>
@@ -150,6 +150,18 @@ const StatisticsPage = () => {
               className="px-6 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white font-medium transition-all duration-300"
             >
               导出统计
+            </button>
+            <button 
+              onClick={async () => {
+                if (window.confirm('确定要清除所有单词吗？此操作无法撤销。')) {
+                  await WebStorage.clear();
+                  alert('所有单词已清除！');
+                  navigate('/');
+                }
+              }}
+              className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-all duration-300"
+            >
+              清除所有单词
             </button>
           </div>
         </div>

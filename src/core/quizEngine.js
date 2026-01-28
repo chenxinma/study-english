@@ -51,28 +51,40 @@ class QuizEngine {
 
     const selectedWords = this._getRandomElements(words, Math.min(5, words.length));
     
-    const questions = selectedWords.map(word => {
-      // Generate hints with first letter and last letter, hiding the middle
-      const english = word.english.toLowerCase();
-      let hint = '';
-      
-      if (english.length <= 2) {
-        // For 1-2 letter words, show first letter and use underscores for the rest
-        hint = english[0] + '_'.repeat(Math.max(0, english.length - 1));
-      } else {
-        // For longer words, show first and last letter with underscores in between
-        hint = english[0] + '_'.repeat(english.length - 2) + english[english.length - 1];
-      }
-      console.log('hint', hint, word);
-      
-      return {
-        chinese: word.chinese,
-        hint: hint,
-        answer: word.english.toLowerCase(),
-        fullWord: word.english,
-        word: word
-      };
-    });
+      const questions = selectedWords.map(word => {
+        // Generate hints with first letter and last letter, hiding the middle
+        const english = word.english.toLowerCase();
+        let hint = '';
+        
+        if (english.length <= 2) {
+          // For 1-2 letter words, show first letter and use underscores for the rest
+          hint = english[0] + '_'.repeat(Math.max(0, english.length - 1));
+        } else {
+          // For longer words, show first and last letter with underscores in between
+          // But preserve spaces, semicolons, and slashes as they are
+          hint = english.split('').map((char, index) => {
+            if (index === 0 || index === english.length - 1) {
+              // Always show first and last character
+              return char;
+            } else if (char === ' ' || char === ';' || char === '/') {
+              // Preserve spaces, semicolons, and slashes
+              return char;
+            } else {
+              // Replace other characters with underscores
+              return '_';
+            }
+          }).join('');
+        }
+        // console.log('hint', hint, word);
+        
+        return {
+          chinese: word.chinese,
+          hint: hint,
+          answer: word.english.toLowerCase(),
+          fullWord: word.english,
+          word: word
+        };
+      });
     
     return {
       type: 'fill-in',

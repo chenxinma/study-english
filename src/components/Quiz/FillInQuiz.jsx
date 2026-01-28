@@ -33,7 +33,15 @@ const FillInQuiz = ({ question, onSubmit, onNextQuestion }) => {
     const correctAnswer = question.answer.toLowerCase().trim();
     const normalizedUserAnswer = userAnswer.toLowerCase().trim();
     
-    const correct = normalizedUserAnswer === correctAnswer;
+    // Handle answer checking for multiple words separated by ; or /
+    let correct = normalizedUserAnswer === correctAnswer;
+    
+    // If not an exact match, check if the user answered any of the valid options
+    if (!correct) {
+      const answerOptions = correctAnswer.split(/[/;]/).map(option => option.trim());
+      correct = answerOptions.includes(normalizedUserAnswer);
+    }
+    
     setIsCorrect(correct);
     setAttempts(attempts + 1);
     
@@ -48,6 +56,7 @@ const FillInQuiz = ({ question, onSubmit, onNextQuestion }) => {
 
   const handleNextQuestionClick = () => {
     setShowFeedback(false);
+    setUserAnswer('');
     onNextQuestion();
   };
 
@@ -56,15 +65,30 @@ const FillInQuiz = ({ question, onSubmit, onNextQuestion }) => {
     
     setHints(hints + 1);
     
+    // Split the answer by semicolon or forward slash
     const answer = question.answer.toLowerCase();
+    const parts = answer.split(/[/;]/);
+    console.log("parts:", parts);
     let newHint = '';
     
     if (hints === 0) {
-      // First hint: show first letter + more underscores
-      newHint = answer[0] + '_'.repeat(answer.length - 2) + answer[answer.length - 1];
+      // First hint: show first letter + more underscores for each part
+      newHint = parts.map(part => {
+        if (part.length === 1) {
+          return part; // If single character, just show it
+        }
+        return part[0] + '_'.repeat(part.length - 2) + part[part.length - 1];
+      }).join(answer.includes(';') ? ';' : '/');
     } else if (hints === 1) {
-      // Second hint: show first two letters and last letter
-      newHint = answer.substring(0, 2) + '_'.repeat(answer.length - 3) + answer[answer.length - 1];
+      // Second hint: show first two letters and last letter for each part
+      newHint = parts.map(part => {
+        if (part.length === 1) {
+          return part; // If single character, just show it
+        } else if (part.length === 2) {
+          return part; // If two characters, show both
+        }
+        return part.substring(0, 2) + '_'.repeat(part.length - 3) + part[part.length - 1];
+      }).join(answer.includes(';') ? ';' : '/');
     }
     
     setCurrentHint(newHint);
@@ -88,22 +112,50 @@ const FillInQuiz = ({ question, onSubmit, onNextQuestion }) => {
   };
 
   const getCharacterClass = (index, char) => {
-    const answer = question.fullWord;
+    // Handle separator characters (; or /) specially
+    if (char === ';' || char === '/') {
+      return 'text-gray-600 font-bold border-b-2 border-transparent w-6 text-center';
+    }
     
     if (char === '_') {
       return 'text-gray-400 border-b-2 border-gray-300 w-8 text-center';
     }
     
-    let shouldBeCorrect = false;
-    if (hints === 1) {
-      shouldBeCorrect = index === 0 || index === answer.length - 1;
-    } else if (hints === 2) {
-      shouldBeCorrect = index === 0 || index === 1 || index === answer.length - 1;
+    // Count non-separator characters in the hint string up to the current position
+    let letterIndex = 0;
+    for (let i = 0; i < index; i++) {
+      const hintChar = currentHint[i];
+      if (hintChar !== ';' && hintChar !== '/') {
+        letterIndex++;
+      }
     }
     
-    return shouldBeCorrect 
-      ? 'text-blue-600 font-bold border-b-2 border-blue-400 w-8 text-center' 
-      : 'text-gray-400 border-b-2 border-gray-300 w-8 text-center';
+    // Now find the corresponding position in the original answer
+    const answer = question.fullWord;
+    const parts = answer.split(/[/;]/);
+    
+    // Map the letterIndex to the correct part and position within that part
+    let currentLetterIndex = 0;
+    for (const part of parts) {
+      if (letterIndex >= currentLetterIndex && letterIndex < currentLetterIndex + part.length) {
+        // This character belongs to this part
+        const posInPart = letterIndex - currentLetterIndex;
+        
+        let shouldBeCorrect = false;
+        if (hints === 1) {
+          shouldBeCorrect = posInPart === 0 || posInPart === part.length - 1;
+        } else if (hints === 2) {
+          shouldBeCorrect = posInPart === 0 || posInPart === 1 || posInPart === part.length - 1;
+        }
+        
+        return shouldBeCorrect 
+          ? 'text-blue-600 font-bold border-b-2 border-blue-400 w-8 text-center' 
+          : 'text-gray-400 border-b-2 border-gray-300 w-8 text-center';
+      }
+      currentLetterIndex += part.length;
+    }
+    
+    return 'text-gray-400 border-b-2 border-gray-300 w-8 text-center'; // fallback
   };
 
   return (

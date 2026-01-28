@@ -67,6 +67,7 @@ const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
 
   const handleNextQuestionClick = () => {
     setShowFeedback(false);
+    setUserAnswer('');
     onNextQuestion();
   };
 
