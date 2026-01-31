@@ -22,6 +22,20 @@
 - **单词导入** - 支持从文件导入单词库
 - **进度追踪** - 详细记录每个单词的学习状态
 
+导入格式，每个单词占一行，格式为 `中文单词	英文单词`，分隔符为制表符 `\t`
+```text
+追赶	chase
+选择	choose
+中国	China
+教	teach
+指示；命令 n.	instruction
+实验；试验 n.	experiment
+活动（单数-复数） n.	activity; activities
+社团 n.	club / society
+书法 n.	calligraphy
+加入 v.	join
+```
+
 ### 🧠 深度学习特性
 - **语义相似度计算** - 基于深度学习的语义向量空间比较
 - **智能同义词识别** - 不仅识别字面相同，更能理解语义相近
