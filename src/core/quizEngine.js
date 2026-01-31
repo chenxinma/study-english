@@ -1,3 +1,5 @@
+import ChineseSemanticService from '../services/chineseSemanticService';
+
 class QuizEngine {
   /**
    * Generate a matching quiz with mixed Chinese and English words
@@ -178,60 +180,21 @@ class QuizEngine {
       return true;
     }
     
-    // Define synonym mappings for common words
-    const synonymMap = this._getSynonymMap();
-    
-    // Check if user answer is a synonym of correct answer
-    const userAnswerLower = userAnswer.toLowerCase();
-    const correctAnswerLower = correctAnswer.toLowerCase();
-    
-    // Direct synonym check
-    if (synonymMap[correctAnswerLower] && synonymMap[correctAnswerLower].includes(userAnswerLower)) {
-      return true;
-    }
-    
-    if (synonymMap[userAnswerLower] && synonymMap[userAnswerLower].includes(correctAnswerLower)) {
-      return true;
-    }
-    
-    // For Chinese answers, check if they share common characters and meaning
+    // For Chinese answers, use the semantic service for more accurate evaluation
     if (this._containsChinese(userAnswer) && this._containsChinese(correctAnswer)) {
-      // Check if user answer contains key characters from correct answer
-      // or vice versa for partial credit
-      return this._isSemanticallySimilar(userAnswer, correctAnswer);
+      // Use the Chinese semantic service for advanced similarity calculation
+      const similarityScore = ChineseSemanticService.calculateSemanticSimilarity(userAnswer, correctAnswer);
+      // Consider answer correct if similarity is above threshold (e.g., 0.8)
+      return similarityScore >= 0.8;
     }
+    
+
     
     // Fallback to similarity check
     return this._calculateSimilarity(userAnswer, correctAnswer) > 0.7;
   }
 
-  /**
-   * Get synonym map for common vocabulary
-   * @returns {Object} Synonym mapping
-   */
-  static _getSynonymMap() {
-    return {
-      '点心': ['零食', '小食', '小吃', '甜点', '糕点'],
-      '零食': ['点心', '小食', '小吃'],
-      '小食': ['零食', '点心', '小吃'],
-      '电脑': ['计算机', '电脑', '计算机设备'],
-      '计算机': ['电脑', '计算机'],
-      '手机': ['移动电话', '手机', '移动设备'],
-      '汽车': ['车', '轿车', '汽车', '车辆'],
-      '书': ['书籍', '书本', '图书'],
-      '水': ['水', '饮用水', '清水'],
-      '吃': ['食用', '吃', '进食'],
-      '看': ['看', '观看', '阅读', '浏览'],
-      '走': ['走', '步行', '走路'],
-      '学习': ['学习', '学习', '读书', '学习知识'],
-      '工作': ['工作', '上班', '工作'],
-      '家': ['家庭', '家', '住宅', '家'],
-      '学校': ['学校', '学校', '学堂'],
-      '朋友': ['朋友', '朋友', '好友'],
-      '老师': ['老师', '教师', '老师'],
-      '学生': ['学生', '学生', '学子']
-    };
-  }
+
 
   /**
    * Check if string contains Chinese characters
@@ -242,30 +205,7 @@ class QuizEngine {
     return /[\u4e00-\u9fff]/.test(text);
   }
 
-  /**
-   * Check semantic similarity for Chinese words
-   * @param {string} str1 - First Chinese string
-   * @param {string} str2 - Second Chinese string
-   * @returns {boolean} Whether semantically similar
-   */
-  static _isSemanticallySimilar(str1, str2) {
-    // Extract unique Chinese characters from both strings
-    const chars1 = [...new Set(str1.match(/[\u4e00-\u9fff]/g) || [])];
-    const chars2 = [...new Set(str2.match(/[\u4e00-\u9fff]/g) || [])];
-    
-    // If strings are very different in length, they're likely not similar
-    const lengthRatio = Math.min(chars1.length, chars2.length) / Math.max(chars1.length, chars2.length);
-    if (lengthRatio < 0.3) {
-      return false;
-    }
-    
-    // Calculate character overlap
-    const commonChars = chars1.filter(char => chars2.includes(char));
-    const overlapRatio = commonChars.length / Math.max(chars1.length, chars2.length);
-    
-    // If there's significant character overlap, consider them similar
-    return overlapRatio >= 0.4;
-  }
+
 
   /**
    * Calculate similarity between two strings (simple implementation)

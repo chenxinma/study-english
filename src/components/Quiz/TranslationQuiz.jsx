@@ -1,68 +1,90 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ChineseSemanticService from '../../services/chineseSemanticService';
 
 const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [showAlternatives, setShowAlternatives] = useState(false);
-  const [synonyms, setSynonyms] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
   const inputRef = useRef(null);
-  const startTime = useRef(Date.now());
+  const startTime = useRef();
 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
     startTime.current = Date.now();
-  }, [question]);
-
-  useEffect(() => {
-    // Generate synonyms for this word
-    const generateSynonyms = () => {
-      const synonymMap = {
-        '点心': ['零食', '小食', '小吃', '甜点', '糕点'],
-        '零食': ['点心', '小食', '小吃'],
-        '电脑': ['计算机', '电脑设备'],
-        '手机': ['移动电话', '移动设备'],
-        '汽车': ['车', '轿车', '车辆'],
-        '书': ['书籍', '书本', '图书'],
-        '水': ['饮用水', '清水'],
-        '学习': ['读书', '学习知识'],
-        '工作': ['上班', '工作'],
-        '家': ['家庭', '住宅']
-      };
-      
-      return synonymMap[question.answer] || [];
+    
+    // 检查模型是否已加载
+    const checkModelReady = () => {
+      if (ChineseSemanticService.isReady()) {
+        setModelReady(true);
+      } else {
+        // 等待模型加载
+        const interval = setInterval(() => {
+          if (ChineseSemanticService.isReady()) {
+            setModelReady(true);
+            clearInterval(interval);
+          }
+        }, 500);
+        
+        return () => clearInterval(interval);
+      }
     };
     
-    setSynonyms(generateSynonyms());
+    checkModelReady();
   }, [question]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!userAnswer.trim()) return;
+    if (!userAnswer.trim() || isProcessing) return;
 
     setShowFeedback(true);
+    setIsProcessing(true);
     const normalizedUserAnswer = userAnswer.trim();
     const normalizedCorrectAnswer = question.answer.trim();
     
-    // Check for exact match or synonym
-    let correct = normalizedUserAnswer === normalizedCorrectAnswer;
-    
-    if (!correct && synonyms.length > 0) {
-      correct = synonyms.includes(normalizedUserAnswer);
+    try {
+      // Use Chinese semantic service for more advanced evaluation
+      const similarityScore = await ChineseSemanticService.compareSimilarity(
+        normalizedUserAnswer, 
+        normalizedCorrectAnswer
+      );
+      
+      // Consider correct if similarity is above threshold (0.8)
+      const correct = similarityScore >= 0.8;
+      
+      // Check if it's an exact match vs. semantic match
+      const exactMatch = normalizedUserAnswer === normalizedCorrectAnswer;
+      const isSynonym = correct && !exactMatch;
+      
+      setIsCorrect(correct);
+      
+      onSubmit({
+        answer: userAnswer.trim(),
+        correct,
+        isSynonym,
+        similarityScore,
+        timeToAnswer: Date.now() - startTime.current
+      });
+    } catch (error) {
+      console.error('计算语义相似度失败:', error);
+      // 如果模型计算失败，使用简单的字符串比较
+      const exactMatch = normalizedUserAnswer === normalizedCorrectAnswer;
+      setIsCorrect(exactMatch);
+      
+      onSubmit({
+        answer: userAnswer.trim(),
+        correct: exactMatch,
+        isSynonym: false,
+        similarityScore: exactMatch ? 1 : 0,
+        timeToAnswer: Date.now() - startTime.current
+      });
+    } finally {
+      setIsProcessing(false);
     }
-    
-    setIsCorrect(correct);
-    
-    onSubmit({
-      answer: userAnswer.trim(),
-      correct,
-      isSynonym: correct && normalizedUserAnswer !== normalizedCorrectAnswer,
-      synonyms: synonyms,
-      timeToAnswer: Date.now() - startTime.current
-    });
   };
 
   const handleNextQuestionClick = () => {
@@ -78,7 +100,7 @@ const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
         return { message: '完全正确！', color: 'text-green-600' };
       } else {
         return { 
-          message: `正确！"${userAnswer.trim()}" 是 "${question.answer}" 的同义词`, 
+          message: `语义正确！"${userAnswer.trim()}" 与 "${question.answer}" 含义相近`, 
           color: 'text-green-600' 
         };
       }
@@ -90,16 +112,14 @@ const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
     }
   };
 
-  const toggleAlternatives = () => {
-    setShowAlternatives(!showAlternatives);
-  };
+
 
   return (
     <div className="space-y-8">
       {/* Quiz Header */}
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-50 mb-4">翻译题</h2>
-        <p className="text-gray-100 mb-8">请将下列英文单词翻译成中文 (支持同义词)</p>
+         <p className="text-gray-100 mb-8">请将下列英文单词翻译成中文 (支持语义匹配)</p>
       </div>
 
       {/* English Word Display */}
@@ -122,40 +142,7 @@ const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
         </div>
       </div>
 
-      {/* Synonyms Hint Card */}
-      {synonyms.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-              <span className="text-sm font-medium text-yellow-800">
-                提示：该词有 {synonyms.length} 个常见同义词
-              </span>
-            </div>
-            <button
-              onClick={toggleAlternatives}
-              className="text-sm text-yellow-600 hover:text-yellow-700 font-medium transition-colors"
-            >
-              {showAlternatives ? '隐藏同义词' : '显示同义词'}
-            </button>
-          </div>
-          
-          {showAlternatives && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {synonyms.map((synonym, index) => (
-                <span 
-                  key={index}
-                  className="px-3 py-1 bg-white border border-yellow-300 rounded-full text-sm text-yellow-800"
-                >
-                  {synonym}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* Answer Form */}
       {!showFeedback && (
@@ -186,10 +173,10 @@ const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
           <div className="flex gap-4 justify-center">
             <button
               type="submit"
-              disabled={!userAnswer.trim() || showFeedback}
+              disabled={!userAnswer.trim() || showFeedback || isProcessing || !modelReady}
               className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              提交翻译
+              {isProcessing ? '处理中...' : !modelReady ? '加载模型中...' : '提交翻译'}
             </button>
             
             <button
@@ -235,31 +222,15 @@ const TranslationQuiz = ({ question, onSubmit, onNextQuestion }) => {
               </div>
             )}
             
-            {isCorrect && synonyms.length > 0 && userAnswer.trim() !== question.answer.trim() && (
-              <div className="p-4 bg-green-100 rounded-lg">
-                <p className="text-sm text-green-800">
-                  你使用了同义词 "{userAnswer.trim()}"，完全正确！
-                </p>
-              </div>
-            )}
+             {isCorrect && userAnswer.trim() !== question.answer.trim() && (
+               <div className="p-4 bg-green-100 rounded-lg">
+                 <p className="text-sm text-green-800">
+                   你使用了语义相近的表达 "{userAnswer.trim()}"，完全正确！
+                 </p>
+               </div>
+             )}
             
-            {synonyms.length > 0 && (
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800 font-medium mb-2">该词的其他正确翻译：</p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {[question.answer, ...synonyms].filter((word, index, arr) => 
-                    arr.indexOf(word) === index || word.trim().toLowerCase() !== userAnswer.trim().toLowerCase()
-                  ).map((synonym, index) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1 bg-white border border-blue-200 rounded-full text-sm text-blue-800"
-                    >
-                      {synonym}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+
           </div>
           
           {/* Next Question Button */}

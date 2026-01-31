@@ -55,7 +55,7 @@ const MainLayout = ({ children }) => {
       <footer className="bg-black/20 text-white/60 py-8 mt-12">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm">
-            © 2024 智能背单词系统 - 基于莱特纳盒子算法的科学记忆方法
+            智能背单词系统 - 基于莱特纳盒子算法的科学记忆方法（by chenxin.ma）
           </p>
         </div>
       </footer>

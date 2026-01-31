@@ -2,6 +2,8 @@
 
 一个基于 React + Vite 构建的智能英语学习应用，采用莱特纳间隔重复系统帮助用户高效学习英语单词。
 
+![UI截图](./docs/img/page1.png)
+
 ## 功能特性
 
 ### 🎯 多种学习模式
@@ -11,13 +13,21 @@
 
 ### 📚 智能学习系统
 - **莱特纳系统** - 科学间隔重复算法，根据记忆曲线优化复习间隔
-- **自适应学习** - 根据答题情况自动调整单词出现的频率
+- **自适应学习** - 根据用户的答题情况自动调整单词出现的频率
+- **深度学习语义理解** - 使用 bge-small-zh-v1.5 模型提供智能中文翻译评估
 - **学习统计** - 实时追踪学习进度和正确率
 
 ### 💾 数据管理
 - **本地存储** - 学习数据自动保存在浏览器本地
 - **单词导入** - 支持从文件导入单词库
 - **进度追踪** - 详细记录每个单词的学习状态
+
+### 🧠 深度学习特性
+- **语义相似度计算** - 基于深度学习的语义向量空间比较
+- **智能同义词识别** - 不仅识别字面相同，更能理解语义相近
+- **浏览器端深度学习** - 使用 WebAssembly 提供高性能的模型推理
+- **智能缓存系统** - 模型和语义向量双重缓存，提高响应速度
+- **容错机制** - 模型加载失败时自动降级为字符串匹配
 
 ## 技术栈
 
@@ -27,6 +37,8 @@
 - **样式框架**: Tailwind CSS 4.1.18
 - **数据可视化**: Chart.js 4.5.1
 - **状态管理**: React Context API
+- **语义理解**: @huggingface/transformers 3.13.0
+- **深度学习模型**: bge-small-zh-v1.5 (浏览器端部署)
 
 ## 项目结构
 
@@ -54,10 +66,11 @@ src/
 │   ├── Home.jsx       # 首页
 │   ├── Learning.jsx   # 学习页面
 │   └── Statistics.jsx # 统计页面
-└── services/           # 服务层
-    ├── webLeitnerBox.js
-    ├── webQuizEngine.js
-    └── webWordManager.js
+├── services/           # 服务层
+│   ├── webLeitnerBox.js
+│   ├── webQuizEngine.js
+│   ├── webWordManager.js
+│   └── chineseSemanticService.js  # 中文语义理解服务（深度学习）
 ```
 
 ## 核心算法
@@ -74,6 +87,7 @@ src/
 
 ### 智能测验引擎
 - 支持多种测验类型，自动生成题目
+- **深度学习语义理解** - 使用 bge-small-zh-v1.5 模型提供智能中文翻译评估
 - 智能答案匹配，支持同义词识别
 - 详细的答题数据记录（尝试次数、提示使用、答题时间等）
 
@@ -126,13 +140,64 @@ npm run lint
 
 ## 开发说明
 
+### 使用语义服务
+
+#### 1. 基础使用示例
+```javascript
+import chineseSemanticService from './services/chineseSemanticService';
+
+// 等待模型加载完成
+while (!chineseSemanticService.isReady()) {
+  await new Promise(resolve => setTimeout(resolve, 100));
+}
+
+// 比较两个中文文本的语义相似度
+const similarity = await chineseSemanticService.compareSimilarity(
+  "这是一个测试", 
+  "这是一个试验"
+);
+
+console.log('语义相似度:', similarity); // 输出 0-1 之间的数值
+```
+
+#### 2. 在 React 组件中使用
+```javascript
+useEffect(() => {
+  const checkModelReady = async () => {
+    while (!chineseSemanticService.isReady()) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    // 模型已加载，可以使用
+  };
+  
+  checkModelReady();
+}, []);
+```
+
+#### 3. 获取文本向量
+```javascript
+const vector = await chineseSemanticService.getTextEmbedding('你好，世界');
+console.log('文本向量:', vector); // 768维向量
+```
+
 ### 添加新的测验类型
 1. 在 `src/core/quizEngine.js` 中添加新的测验生成方法
 2. 在 `src/components/Quiz/` 目录下创建新的测验组件
 3. 在 `src/pages/Learning.jsx` 中注册新的测验组件
+4. 如果需要语义理解功能，可以在组件中使用 chineseSemanticService
 
 ### 自定义单词格式
 可以在 `src/models/word.js` 中修改单词数据模型，支持更丰富的单词属性。
+
+### 模型配置
+在 `src/services/chineseSemanticService.js` 中可以修改模型配置：
+```javascript
+env.setOptions({
+  cacheDir: './models',      // 模型缓存目录
+  allowRemoteModels: false,  // 是否允许远程模型
+  allowLocalModels: true     // 是否允许本地模型
+});
+```
 
 ## 贡献指南
 

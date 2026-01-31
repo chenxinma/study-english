@@ -8,7 +8,7 @@ const FillInQuiz = ({ question, onSubmit, onNextQuestion }) => {
   const [hints, setHints] = useState(0);
   const [currentHint, setCurrentHint] = useState(question.hint);
   const inputRef = useRef(null);
-  const startTime = useRef(Date.now());
+  const startTime = useRef();
 
   useEffect(() => {
     // Focus input when component mounts or question changes
