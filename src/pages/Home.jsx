@@ -1,12 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
+import { useGamification } from '../contexts/GamificationContext';
+import StreakDisplay from '../components/Gamification/StreakDisplay';
+import LevelProgress from '../components/Gamification/LevelProgress';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { getStatistics, loadWordsFromFile } = useApp();
+  const { achievements, isLoading: gamificationLoading } = useGamification();
   
   const stats = getStatistics();
+  const unlockedAchievements = achievements ? achievements.filter(a => a.unlocked).length : 0;
 
   const handleImportClick = () => {
     // Create file input element
@@ -33,6 +38,10 @@ const HomePage = () => {
 
   const viewStatistics = () => {
     navigate('/statistics');
+  };
+
+  const viewAchievements = () => {
+    navigate('/achievements');
   };
 
   return (
@@ -113,8 +122,60 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* Additional Feature Cards with Gamification Elements */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Achievements Card */}
+        <div 
+          className="feature-card p-8 animate-fade-in cursor-pointer hover:scale-105 transition-transform" 
+          style={{animationDelay: '0.3s'}}
+          onClick={viewAchievements}
+        >
+          <div className="w-14 h-14 sm:w-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mb-6">
+            <svg className="w-7 h-7 sm:w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">成就徽章</h2>
+          <p className="text-gray-600 mb-6">查看已解锁的学习徽章，挑战更多成就目标</p>
+          <div className="mt-4 text-sm text-gray-500">
+            <div className="flex items-center justify-between">
+              <span>已解锁</span>
+              <span className="font-semibold text-yellow-600">{unlockedAchievements || 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Streak Today */}
+        <div className="feature-card p-8 animate-fade-in" style={{animationDelay: '0.4s'}}>
+          <div className="w-14 h-14 sm:w-16 bg-gradient-to-br from-red-400 to-red-600 rounded-2xl flex items-center justify-center mb-6">
+            <svg className="w-7 h-7 sm:w-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 0011 0c0-1.12-.072-2.07-.208-2.91-.146-.94-.32-1.78-.52-2.57-.2-1-.42-1.9-.65-2.65a1 1 0 00-.385-1.45z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">学习连击</h2>
+          <p className="text-gray-600 mb-6">保持每日学习，积累经验奖励与连击倍数</p>
+          <div className="flex justify-center">
+            <StreakDisplay size="small" />
+          </div>
+        </div>
+
+        {/* Current Level */}
+        <div className="feature-card p-8 animate-fade-in" style={{animationDelay: '0.5s'}}>
+          <div className="w-14 h-14 sm:w-16 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-2xl flex items-center justify-center mb-6">
+            <svg className="w-7 h-7 sm:w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">进度等级</h2>
+          <p className="text-gray-600 mb-6">累积学习经验，提升等级以解锁更多功能</p>
+          <div className="flex justify-center">
+            <LevelProgress size="small" />
+          </div>
+        </div>
+      </div>
+
       {/* Quick Stats Bar */}
-      <div className="glass-morphism rounded-2xl p-6 text-white animate-fade-in" style={{animationDelay: '0.4s'}}>
+      <div className="glass-morphism rounded-2xl p-6 text-white animate-fade-in" style={{animationDelay: '0.6s'}}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           <div>
             <div className="text-3xl font-bold mb-1">{stats.totalStudied}</div>
@@ -136,7 +197,7 @@ const HomePage = () => {
       </div>
 
       {/* Learning Tips */}
-      <div className="mt-8 glass-morphism rounded-2xl p-6 text-white animate-fade-in" style={{animationDelay: '0.5s'}}>
+      <div className="mt-8 glass-morphism rounded-2xl p-6 text-white animate-fade-in" style={{animationDelay: '0.7s'}}>
         <div className="flex items-center gap-4">
           <svg className="w-5 h-5 sm:w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -145,7 +206,7 @@ const HomePage = () => {
             <h3 className="font-semibold mb-1">今日学习建议</h3>
             <p className="text-white/80 text-sm">
               {stats.totalWords > 0 
-                ? `盒子1中有 ${stats.boxDistribution?.[1] || 0} 个新单词需要学习，建议今天重点复习这些内容。`
+                ? `盒子1中有 ${stats.boxDistribution?.[1] || 0} 个新单词需要学习，坚持每天学习获得更多经验值奖励。`
                 : '还没有导入单词，请先导入单词库开始学习之旅！'
               }
             </p>

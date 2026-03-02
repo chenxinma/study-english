@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useGamification } from '../contexts/GamificationContext';
 import MatchingQuiz from '../components/Quiz/MatchingQuiz';
 import FillInQuiz from '../components/Quiz/FillInQuiz';
 import TranslationQuiz from '../components/Quiz/TranslationQuiz';
+import StreakDisplay from '../components/Gamification/StreakDisplay';
+import LevelProgress from '../components/Gamification/LevelProgress';
 
 const LearningPage = () => {
   const { startQuiz, submitAnswer, moveToNextQuestion, currentQuiz, learningProgress } = useApp();
+  const { earnXP, checkAchievements } = useGamification();
   const [quizType, setQuizType] = useState('random');
   const [isStarted, setIsStarted] = useState(false);
 
@@ -33,8 +37,42 @@ const LearningPage = () => {
     moveToNextQuestion();
   };
 
-  const handleQuizComplete = () => {
+  const handleQuizComplete = async () => {
     setIsStarted(false);
+    
+    // Calculate and award XP based on performance
+    const correctAnswers = learningProgress.userAnswers.filter(answer => answer.correct).length;
+    const totalQuestions = learningProgress.userAnswers.length;
+    
+    if (totalQuestions > 0) {
+      // Base XP for attempting quiz
+      let baseXP = 50;
+      
+      // Bonus for correct answers
+      const correctBonus = correctAnswers * 10;
+      
+      // Perfect score bonus
+      const perfectBonus = correctAnswers === totalQuestions ? 50 : 0;
+      
+      const totalXP = baseXP + correctBonus + perfectBonus;
+      
+      // Award XP to the user
+      await earnXP(totalXP, { 
+        context: 'quiz_completion',
+        correctCount: correctAnswers,
+        totalCount: totalQuestions,
+        perfectScore: correctAnswers === totalQuestions
+      });
+      
+      // Check for achievements
+      await checkAchievements('quiz_completed', {
+        words: learningProgress.userAnswers.length,
+        correctCount: correctAnswers,
+        perfectScore: correctAnswers === totalQuestions,
+        accuracy: Math.round((correctAnswers / totalQuestions) * 100)
+      });
+    }
+    
     handleStartQuiz(); // Start new quiz
   };
 
@@ -47,10 +85,19 @@ const LearningPage = () => {
     
     switch (currentQuiz.type) {
       case 'matching':
+        const handleMatchSubmit = (answer) => {
+          return handleAnswerSubmit(answer).then(result => {
+            if (result && result.shouldAdvance) {
+              handleNextQuestion();
+            }
+            return result;
+          });
+        };
+        
         return (
           <MatchingQuiz 
             question={currentQuestion}
-            onSubmit={handleAnswerSubmit}
+            onSubmit={handleMatchSubmit}
           />
         );
       case 'fill-in':
@@ -70,10 +117,19 @@ const LearningPage = () => {
           />
         );
       default:
+        const handleDefaultSubmit = (answer) => {
+          return handleAnswerSubmit(answer).then(result => {
+            if (result && result.shouldAdvance) {
+              handleNextQuestion();
+            }
+            return result;
+          });
+        };
+        
         return (
           <MatchingQuiz 
             question={currentQuestion}
-            onSubmit={handleAnswerSubmit}
+            onSubmit={handleDefaultSubmit}
           />
         );
     }
@@ -96,6 +152,13 @@ const LearningPage = () => {
           <p className="text-xl text-white/80">
             正确率: {accuracy}% ({correctAnswers}/{totalQuestions})
           </p>
+          
+          {/* Show gained XP */}
+          {totalQuestions > 0 && (
+            <p className="text-lg text-green-300 mt-2">
+              +{50 + correctAnswers * 10 + (correctAnswers === totalQuestions ? 50 : 0)} XP
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -193,6 +256,12 @@ const LearningPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Gamification display elements */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <StreakDisplay size="large" />
+        <LevelProgress size="large" />
+      </div>
+      
       {/* Progress Bar */}
       {currentQuiz && !learningProgress.showResults && (
         <div className="glass-morphism rounded-2xl p-4 text-white">
